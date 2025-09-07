@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>출고 정보 조회 - Verish</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>교환 출고일 조회</h1>
+        <p>고객님의 교환 신청 현황을 확인할 수 있습니다.</p>
+        <form id="product-form" class="form-style">
+            <div class="input-group">
+                <label for="name">수령자명</label>
+                <input type="text" id="name" name="name" required placeholder="이름 입력">
+            </div>
+            <div class="input-group">
+                <label for="contact">전화번호</label>
+                <input type="tel" id="contact" name="contact" required placeholder="01012345678">
+            </div>
+            <button type="submit">조회하기</button>
+        </form>
+
+        <div id="results" class="results"></div>
+        <div id="message" class="message"></div>
+    </div>
+
+    <script>
+        document.getElementById('product-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const name = document.getElementById('name').value;
+            const contact = document.getElementById('contact').value;
+
+            const response = await fetch('/get_product_info', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, contact }),
+            });
+
+            const data = await response.json();
+            const resultsDiv = document.getElementById('results');
+            const messageDiv = document.getElementById('message');
+            resultsDiv.innerHTML = '';
+            messageDiv.innerHTML = '';
+
+            if (data.data && data.data.length > 0) {
+                data.data.forEach(item => {
+                    const productInfo = document.createElement('div');
+                    productInfo.classList.add('product-info');
+                    productInfo.innerHTML = `
+                        <h2>${item['교환 상품명']}</h2>
+                        <p>교환 옵션명: ${item['교환 옵션명']}</p>
+                        <p>수량: ${item['수량']}</p>
+                        <p>예상 출고일: ${item['예상 출고일']}</p>
+                        <p>실제 출고일: ${item['실제 출고일']}</p>
+                        <p>송장번호: ${item['송장번호']}</p>
+                    `;
+                    resultsDiv.appendChild(productInfo);
+                });
+            } else if (data.message) {
+                messageDiv.innerHTML = data.message;
+            } else if (data.error) {
+                messageDiv.innerHTML = `<p style="color:red">${data.error}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>
